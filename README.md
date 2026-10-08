@@ -1,57 +1,21 @@
-# Sample Hardhat 3 Project (`mocha` and `ethers`)
+# Track-AI contracts
 
-This project showcases a Hardhat 3 project using `mocha` for tests and the `ethers` library for Ethereum interactions.
+AI 음악 창작 증명과 양도 불가능한 상업 이용권 거래를 분리한 Solidity 프로젝트입니다.
 
-To learn more about Hardhat 3, please visit the [Getting Started guide](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). To share your feedback, join our [Hardhat 3](https://hardhat.org/hardhat3-telegram-group) Telegram group or [open an issue](https://github.com/NomicFoundation/hardhat/issues/new) in our GitHub issue tracker.
+`TrackRegistry` → `LicenseMarketplace` → `RevenueSplitter` + `LicenseNFT`
 
-## Project Overview
+실제 AI 검증자 EIP-712 서명으로 음원을 등록하고 PASS/WARN 음원 이용권을 정확한 네이티브 토큰 금액으로 구매합니다. HOLD는 등록 가능하지만 구매 불가입니다. 기여자 지분은 정수 % 합계 100이며 불변입니다. 수익은 기여자가 직접 출금합니다.
 
-This example project includes:
-
-- A simple Hardhat configuration file.
-- Foundry-compatible Solidity unit tests.
-- TypeScript integration tests using `mocha` and ethers.js
-- Examples demonstrating how to connect to different types of networks, including locally simulating OP mainnet.
-
-## Usage
-
-### Running Tests
-
-To run all the tests in the project, execute the following command:
-
-```shell
-npx hardhat test
+```sh
+npm ci
+npm run build
+npm run typecheck
+npm test
+npm run abi
 ```
 
-You can also selectively run the Solidity or `mocha` tests:
+Polygon Amoy(chainId 80002) 배포: `.env.example`의 환경 변수를 shell에 주입한 뒤 `npm run deploy:amoy`. 메인넷 배포는 스크립트에서 차단합니다. 컨트랙트 주소는 `deployments/80002.json`, 연동 ABI는 `abi/*.json`에 기록됩니다.
 
-```shell
-npx hardhat test solidity
-npx hardhat test mocha
-```
+서명 구조, 함수, 이벤트, 오류, 지갑 호출, 배포 절차는 [Backend 연동 문서](docs/BACKEND_INTEGRATION.md)를 참조하세요. 변경 및 검증 결과는 [구현 보고서](docs/IMPLEMENTATION_REPORT.md)에 기록합니다.
 
-### Make a deployment to Sepolia
-
-This project includes an example Ignition module to deploy the contract. You can deploy this module to a locally simulated chain or to Sepolia.
-
-To run the deployment to a local chain:
-
-```shell
-npx hardhat ignition deploy ignition/modules/Counter.ts
-```
-
-To run the deployment to Sepolia, you need an account with funds to send the transaction. The provided Hardhat configuration includes a Configuration Variable called `SEPOLIA_PRIVATE_KEY`, which you can use to set the private key of the account you want to use.
-
-You can set the `SEPOLIA_PRIVATE_KEY` variable using the `hardhat-keystore` plugin or by setting it as an environment variable.
-
-To set the `SEPOLIA_PRIVATE_KEY` config variable using `hardhat-keystore`:
-
-```shell
-npx hardhat keystore set SEPOLIA_PRIVATE_KEY
-```
-
-After setting the variable, you can run the deployment with the Sepolia network:
-
-```shell
-npx hardhat ignition deploy --network sepolia ignition/modules/Counter.ts
-```
+기존 `AudioLicense` 이름은 등록 전용 `TrackRegistry` 상속 계약으로 남겼습니다. 기존 `registerAndMint` API와 서명은 새 역할 분리와 보안 정책에 맞춰 교체해야 합니다.

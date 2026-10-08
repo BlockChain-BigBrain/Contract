@@ -1,30 +1,23 @@
 import hardhatToolboxMochaEthersPlugin from "@nomicfoundation/hardhat-toolbox-mocha-ethers";
-import hardhatEthersPlugin from "@nomicfoundation/hardhat-ethers";
-import { defineConfig } from "hardhat/config";
+import { defineConfig, configVariable } from "hardhat/config";
 
 export default defineConfig({
-  plugins: [
-    hardhatToolboxMochaEthersPlugin,
-    hardhatEthersPlugin
-  ],
+  plugins: [hardhatToolboxMochaEthersPlugin],
   solidity: {
     profiles: {
       default: {
         version: "0.8.24",
-        settings: {
-          evmVersion: "cancun",
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
+        settings: { evmVersion: "cancun", optimizer: { enabled: true, runs: 200 }, viaIR: true },
       },
     },
   },
   networks: {
-    hardhat: {
-      type: "edr-simulated",
-      chainType: "l1",
+    hardhat: { type: "edr-simulated", chainType: "l1" },
+    polygonAmoy: {
+      type: "http", chainType: "l1", chainId: 80002,
+      url: configVariable("POLYGON_AMOY_RPC_URL"),
+      accounts: [configVariable("DEPLOYER_PRIVATE_KEY")],
     },
   },
+  verify: { etherscan: { apiKey: configVariable("POLYGONSCAN_API_KEY") } },
 });
