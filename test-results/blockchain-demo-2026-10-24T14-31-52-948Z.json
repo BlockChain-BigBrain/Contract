@@ -1,0 +1,100 @@
+{
+  "timestamp": "2026-10-24T14:31:52.948Z",
+  "testPurpose": "AudioLicense 컨트랙트에서 정상 AI 검증자 EIP-712 서명만 민팅을 허용하고, 가짜 서명은 거부되는지 확인",
+  "network": {
+    "name": "Hardhat localhost",
+    "rpcUrl": "http://127.0.0.1:8545",
+    "chainId": 31337
+  },
+  "contract": {
+    "name": "AudioLicense",
+    "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+  },
+  "accounts": {
+    "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "creator1": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "creator2": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "verificationSignerAddress": "0xe29f74ED44956eb8a8aCd9E9d606E8e52aFe87cb",
+    "fakeSigner": "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+  },
+  "eip712": {
+    "domain": {
+      "name": "AudioAI_Registry",
+      "version": "1.0.0",
+      "chainId": 31337,
+      "verifyingContract": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
+    },
+    "types": {
+      "RegisterAudio": [
+        {
+          "name": "tokenId",
+          "type": "uint256"
+        },
+        {
+          "name": "ipfsCID",
+          "type": "string"
+        },
+        {
+          "name": "audioHash",
+          "type": "bytes32"
+        },
+        {
+          "name": "similarityScore",
+          "type": "uint256"
+        },
+        {
+          "name": "creatorsHash",
+          "type": "bytes32"
+        },
+        {
+          "name": "sharesHash",
+          "type": "bytes32"
+        }
+      ]
+    },
+    "hashRule": {
+      "creatorsHash": "keccak256(abi.encode(creators))",
+      "sharesHash": "keccak256(abi.encode(shares))",
+      "ethersImplementation": "ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode([...], [...]))"
+    }
+  },
+  "successCase": {
+    "description": "정상 AI 검증자 서명으로 registerAndMint 호출",
+    "result": "Mint success",
+    "transactionHash": "0x2965012c0c9241f19747d8aa0c0785d98ee6f6c847e6860906784216873a407f",
+    "blockNumber": 3,
+    "tokenId": 1792852312,
+    "ipfsCID": "bafybeigdyrzt5sampletrackcid-success-1792852312",
+    "audioHash": "0x42bee4bc054ddc763946dfc040e8de91235b5f20e26c47ccd0a026ad4eb96d81",
+    "similarityScore": 72,
+    "isHoldExpected": false,
+    "creators": [
+      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+    ],
+    "shares": [
+      70,
+      30
+    ]
+  },
+  "failCase": {
+    "description": "다른 지갑이 만든 가짜 서명으로 registerAndMint 호출",
+    "result": "Mint rejected as expected",
+    "reason": "VM Exception while processing transaction: reverted with reason string 'Invalid AI Verification Signature'",
+    "tokenId": 1792852313,
+    "ipfsCID": "bafybeigdyrzt5sampletrackcid-fail-1792852312",
+    "audioHash": "0xa6e1deea88d42d19ef1a6bedf56a08d58661dc4b86ae87a0bc956796d6ac105e",
+    "similarityScore": 91,
+    "isHoldExpected": true,
+    "creators": [
+      "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+      "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
+    ],
+    "shares": [
+      70,
+      30
+    ]
+  },
+  "conclusion": "정상 AI 검증자 EIP-712 서명으로는 ERC-1155 라이선스 민팅이 성공했고, 다른 signer가 만든 가짜 서명은 Invalid AI Verification Signature로 거부되었다.",
+  "securityNote": "VERIFICATION_SIGNER_PRIVATE_KEY는 결과 파일에 저장하지 않았으며, GitHub/프론트엔드/공개 문서에 노출하면 안 된다."
+}
