@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-30T08:44:32.308Z",
+  "chainId": "31337",
+  "scope": "Synthetic local contract demo; no real AI/IPFS/DB integration",
+  "scoreScale": 10000,
+  "contracts": {
+    "TrackRegistry": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "LicenseNFT": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "RevenueSplitter": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+    "LicenseMarketplace": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
+  },
+  "trackId": "1",
+  "holdTrackId": "2",
+  "priceWei": "101",
+  "shares": [
+    60,
+    40
+  ],
+  "allocatedWei": [
+    "60",
+    "41"
+  ],
+  "transactions": {
+    "registerPass": "0x018835196a0d4e6dd7c81a0a86e329344c6f89af969b00a61ee8b0afa31db06b",
+    "registerHold": "0x969b4800b5578bf87015e7f24344e6199d02c312ed8825574543254eaeca150f",
+    "setPrice": "0xc3c5adb15d3fb0c3fb6460dd796f4c897c4639246a39f009bd6b061c79eab12c",
+    "purchase": "0x0503e7f09f7595756eeb968a75b0a4aa4d4660a03f5690c5a94650f97c3df58d",
+    "withdrawCreator": "0x1e54fb632280b87779b1670829f1dd4f4adc19bf45a807e08303892a7571a9b4",
+    "withdrawCollaborator": "0xa15878c681462f115f1b546122f2c48beaa4b12ec23d868df7b8d1acd9273f16"
+  },
+  "checks": {
+    "registrationDoesNotMint": true,
+    "forgedSignatureRejected": true,
+    "holdPurchaseRejected": true,
+    "purchaseMintsLicense": true,
+    "duplicatePurchaseRejected": true,
+    "revenueConservedAndWithdrawn": true
+  }
+}

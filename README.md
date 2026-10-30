@@ -19,3 +19,12 @@ Polygon Amoy(chainId 80002) 배포: `.env.example`의 환경 변수를 shell에 
 서명 구조, 함수, 이벤트, 오류, 지갑 호출, 배포 절차는 [Backend 연동 문서](docs/BACKEND_INTEGRATION.md)를 참조하세요. 변경 및 검증 결과는 [구현 보고서](docs/IMPLEMENTATION_REPORT.md)에 기록합니다.
 
 기존 `AudioLicense` 이름은 등록 전용 `TrackRegistry` 상속 계약으로 남겼습니다. 기존 `registerAndMint` API와 서명은 새 역할 분리와 보안 정책에 맞춰 교체해야 합니다.
+
+
+## Saved local demo
+
+`npm run demo:local` runs the current four-contract registration, forged-signature,
+HOLD, purchase, NFT and revenue withdrawal scenario and saves JSON/Markdown results.
+This uses synthetic inputs, not real AI/IPFS/DB services. See
+[local demo guide](docs/LOCAL_DEMO.md) for persistent localhost execution and the
+private-key-safe verification signer generator.
