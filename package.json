@@ -9,7 +9,10 @@
     "typecheck": "tsc --noEmit",
     "deploy:local": "hardhat run scripts/deploy.ts",
     "deploy:amoy": "hardhat run scripts/deploy.ts --network polygonAmoy",
-    "abi": "hardhat run scripts/export-abi.ts"
+    "abi": "hardhat run scripts/export-abi.ts",
+    "demo:local": "hardhat run scripts/full-demo-save.ts --network hardhat",
+    "demo:localhost": "hardhat run scripts/full-demo-save.ts --network localhost",
+    "signer:generate": "node scripts/generateVerificationSigner.mjs"
   },
   "keywords": [],
   "author": "",
