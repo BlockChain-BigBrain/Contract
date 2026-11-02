@@ -88,7 +88,7 @@ contract TrackRegistry is EIP712 {
         trackId = nextTrackId++;
         trackIdByAudioHash[r.audioHash] = trackId;
         VerificationStatus status = r.similarityScore < 8000 ? VerificationStatus.PASS :
-            r.similarityScore < 9000 ? VerificationStatus.WARN : VerificationStatus.HOLD;
+            r.similarityScore < 8500 ? VerificationStatus.WARN : VerificationStatus.HOLD;
         tracks[trackId] = Track(r.audioHash, r.metadataCID, msg.sender, block.timestamp);
         verifications[trackId] = Verification(r.similarityScore, r.modelVersion, status);
         contributorsByTrack[trackId] = r.contributors;

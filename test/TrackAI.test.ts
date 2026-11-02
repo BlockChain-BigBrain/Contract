@@ -114,7 +114,7 @@ describe("TrackRegistry / real EIP-712 registration", function () {
       await expect(f.registry.connect(f.creator).registerTrack(r, await f.sign(r))).to.be.revertedWithCustomError(f.registry, error);
     });
   }
-  for (const [score,status] of [[0,0],[7999,0],[8000,1],[8999,1],[9000,2],[10000,2]]) {
+  for (const [score,status] of [[0,0],[7999,0],[8000,1],[8499,1],[8500,2],[8501,2],[8999,2],[9000,2],[10000,2]]) {
     it(`score ${score} registers as status ${status}`, async function () {
       const f = await networkHelpers.loadFixture(fixture); await f.register(score);
       expect((await f.registry.getVerification(1)).status).to.equal(BigInt(status));
@@ -149,7 +149,7 @@ describe("LicenseMarketplace + LicenseNFT + RevenueSplitter", function () {
     });
   }
   it("blocks HOLD purchases", async function () {
-    const f = await networkHelpers.loadFixture(fixture); await f.listed(9000);
+    const f = await networkHelpers.loadFixture(fixture); await f.listed(8500);
     await expect(f.market.connect(f.buyer).purchaseLicense(1,{value:100n})).to.be.revertedWithCustomError(f.market,"TrackNotLicensable");
   });
   it("blocks unknown tracks", async function () {
