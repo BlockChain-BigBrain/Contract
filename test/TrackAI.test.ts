@@ -5,7 +5,7 @@ const { ethers, networkHelpers } = await network.create();
 const types = { RegisterTrack: [
   { name: "audioHash", type: "bytes32" }, { name: "metadataCIDHash", type: "bytes32" },
   { name: "registrant", type: "address" }, { name: "contributorsHash", type: "bytes32" },
-  { name: "similarityScore", type: "uint256" }, { name: "modelVersion", type: "string" },
+  { name: "similarityScore", type: "uint256" }, { name: "verificationStatus", type: "uint8" }, { name: "modelVersion", type: "string" },
   { name: "nonce", type: "uint256" }, { name: "deadline", type: "uint256" },
 ] };
 async function fixture() {
@@ -17,25 +17,25 @@ async function fixture() {
   await nft.setMarketplace(await market.getAddress());
   await splitter.setMarketplace(await market.getAddress());
   const receiver = await ethers.deployContract("AdversarialReceiver");
-  const domain = { name: "TrackAI_Registry", version: "1", chainId: (await ethers.provider.getNetwork()).chainId, verifyingContract: await registry.getAddress() };
-  async function data(score = 7999, nonce = 0) {
-    return { audioHash: ethers.id(`audio-${nonce}`), metadataCID: "bafy-test-metadata", contributors: [creator.address, coCreator.address], shares: [60, 40], similarityScore: score, modelVersion: "clap-v1", nonce, deadline: (await networkHelpers.time.latest()) + 3600 };
+  const domain = { name: "TrackAI_Registry", version: "2", chainId: (await ethers.provider.getNetwork()).chainId, verifyingContract: await registry.getAddress() };
+  async function data(score = 7999, nonce = 0, verificationStatus: 0 | 1 | 2 = 0) {
+    return { audioHash: ethers.id(`audio-${nonce}`), metadataCID: "bafy-test-metadata", contributors: [creator.address, coCreator.address], shares: [60, 40], similarityScore: score, verificationStatus, modelVersion: "clap-v1", nonce, deadline: (await networkHelpers.time.latest()) + 3600 };
   }
   type Registration = Awaited<ReturnType<typeof data>>;
   async function sign(r: Registration, registrant = creator.address, signer = verifier, overrideDomain = domain) {
     return signer.signTypedData(overrideDomain, types, {
       audioHash: r.audioHash, metadataCIDHash: ethers.id(r.metadataCID), registrant,
       contributorsHash: ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["address[]", "uint256[]"], [r.contributors, r.shares])),
-      similarityScore: r.similarityScore, modelVersion: r.modelVersion, nonce: r.nonce, deadline: r.deadline,
+      similarityScore: r.similarityScore, verificationStatus: r.verificationStatus, modelVersion: r.modelVersion, nonce: r.nonce, deadline: r.deadline,
     });
   }
-  async function register(score = 7999, nonce = 0) {
-    const r = await data(score, nonce);
+  async function register(score = 7999, nonce = 0, status: 0 | 1 | 2 = 0) {
+    const r = await data(score, nonce, status);
     await registry.connect(creator).registerTrack(r, await sign(r));
     return BigInt(nonce + 1);
   }
-  async function listed(score = 7999, price = 100n) {
-    await register(score);
+  async function listed(score = 7999, price = 100n, status: 0 | 1 | 2 = 0) {
+    await register(score, 0, status);
     await market.connect(creator).setLicensePrice(1, price);
   }
   return { owner, verifier, creator, coCreator, buyer, stranger, registry, nft, splitter, market, receiver, domain, data, sign, register, listed };
@@ -77,7 +77,7 @@ describe("TrackRegistry / real EIP-712 registration", function () {
     await expect(f.registry.connect(f.stranger).registerTrack(r, sig)).to.be.revertedWithCustomError(f.registry, "InvalidSignature");
     await f.registry.connect(f.creator).registerTrack(r, sig);
   });
-  for (const field of ["metadataCID", "contributors", "shares", "audioHash", "modelVersion", "similarityScore", "nonce", "deadline"] as const) {
+  for (const field of ["metadataCID", "contributors", "shares", "audioHash", "modelVersion", "similarityScore", "verificationStatus", "nonce", "deadline"] as const) {
     it(`binds signed ${field}`, async function () {
       const f = await networkHelpers.loadFixture(fixture); const r = await f.data(); const sig = await f.sign(r);
       switch (field) {
@@ -87,6 +87,7 @@ describe("TrackRegistry / real EIP-712 registration", function () {
         case "audioHash": r.audioHash = ethers.id("changed"); break;
         case "modelVersion": r.modelVersion = "other"; break;
         case "similarityScore": r.similarityScore = 8000; break;
+        case "verificationStatus": r.verificationStatus = 2; break;
         case "nonce": r.nonce++; break;
         case "deadline": r.deadline++; break;
       }
@@ -114,9 +115,9 @@ describe("TrackRegistry / real EIP-712 registration", function () {
       await expect(f.registry.connect(f.creator).registerTrack(r, await f.sign(r))).to.be.revertedWithCustomError(f.registry, error);
     });
   }
-  for (const [score,status] of [[0,0],[7999,0],[8000,1],[8499,1],[8500,2],[8501,2],[8999,2],[9000,2],[10000,2]]) {
-    it(`score ${score} registers as status ${status}`, async function () {
-      const f = await networkHelpers.loadFixture(fixture); await f.register(score);
+  for (const [score,status] of [[0,0],[7999,0],[8000,0],[8499,0],[8500,0],[8501,1],[8999,1],[9000,2],[10000,2]]) {
+    it(`AI status ${status} stays authoritative for score ${score}`, async function () {
+      const f = await networkHelpers.loadFixture(fixture); await f.register(score, 0, status as 0 | 1 | 2);
       expect((await f.registry.getVerification(1)).status).to.equal(BigInt(status));
       expect(await f.registry.isTrackLicensable(1)).to.equal(status !== 2);
     });
@@ -134,7 +135,7 @@ describe("TrackRegistry / real EIP-712 registration", function () {
 describe("LicenseMarketplace + LicenseNFT + RevenueSplitter", function () {
   for (const score of [7999, 8000]) {
     it(`purchases ${score < 8000 ? "PASS" : "WARN"} with atomic NFT and 60:40 allocation`, async function () {
-      const f = await networkHelpers.loadFixture(fixture); await f.listed(score);
+      const f = await networkHelpers.loadFixture(fixture); await f.listed(score, 100n, score === 8000 ? 1 : 0);
       await expect(f.market.connect(f.buyer).purchaseLicense(1,{value:100n}))
         .to.emit(f.market,"LicensePurchased").and.to.emit(f.nft,"LicenseMinted").and.to.emit(f.splitter,"RevenueAllocated");
       expect(await f.nft.balanceOf(f.buyer.address,1)).to.equal(1n);
@@ -149,7 +150,7 @@ describe("LicenseMarketplace + LicenseNFT + RevenueSplitter", function () {
     });
   }
   it("blocks HOLD purchases", async function () {
-    const f = await networkHelpers.loadFixture(fixture); await f.listed(8500);
+    const f = await networkHelpers.loadFixture(fixture); await f.listed(8500, 100n, 2);
     await expect(f.market.connect(f.buyer).purchaseLicense(1,{value:100n})).to.be.revertedWithCustomError(f.market,"TrackNotLicensable");
   });
   it("blocks unknown tracks", async function () {
