@@ -13,6 +13,7 @@ contract TrackRegistry is EIP712 {
         address[] contributors;
         uint256[] shares;
         uint256 similarityScore;
+        VerificationStatus verificationStatus;
         string modelVersion;
         uint256 nonce;
         uint256 deadline;
@@ -29,7 +30,7 @@ contract TrackRegistry is EIP712 {
         VerificationStatus status;
     }
     bytes32 public constant REGISTER_TRACK_TYPEHASH = keccak256(
-        "RegisterTrack(bytes32 audioHash,bytes32 metadataCIDHash,address registrant,bytes32 contributorsHash,uint256 similarityScore,string modelVersion,uint256 nonce,uint256 deadline)"
+        "RegisterTrack(bytes32 audioHash,bytes32 metadataCIDHash,address registrant,bytes32 contributorsHash,uint256 similarityScore,uint8 verificationStatus,string modelVersion,uint256 nonce,uint256 deadline)"
     );
     address public immutable verificationSigner;
     uint256 public nextTrackId = 1;
@@ -54,7 +55,7 @@ contract TrackRegistry is EIP712 {
     event TrackRegistered(uint256 indexed trackId, address indexed creator, bytes32 indexed audioHash, string metadataCID, VerificationStatus status, uint256 timestamp);
     event VerificationRecorded(uint256 indexed trackId, uint256 similarityScore, string modelVersion, VerificationStatus status, uint256 timestamp);
 
-    constructor(address signer) EIP712("TrackAI_Registry", "1") {
+    constructor(address signer) EIP712("TrackAI_Registry", "2") {
         if (signer == address(0)) revert InvalidInput();
         verificationSigner = signer;
     }
@@ -79,7 +80,7 @@ contract TrackRegistry is EIP712 {
         if (total != 100) revert InvalidShares();
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
             REGISTER_TRACK_TYPEHASH, r.audioHash, keccak256(bytes(r.metadataCID)), msg.sender,
-            keccak256(abi.encode(r.contributors, r.shares)), r.similarityScore,
+            keccak256(abi.encode(r.contributors, r.shares)), r.similarityScore, uint256(r.verificationStatus),
             keccak256(bytes(r.modelVersion)), r.nonce, r.deadline
         )));
         if (ECDSA.recover(digest, signature) != verificationSigner) revert InvalidSignature();
@@ -87,8 +88,7 @@ contract TrackRegistry is EIP712 {
         isAudioHashRegistered[r.audioHash] = true;
         trackId = nextTrackId++;
         trackIdByAudioHash[r.audioHash] = trackId;
-        VerificationStatus status = r.similarityScore < 8000 ? VerificationStatus.PASS :
-            r.similarityScore < 8500 ? VerificationStatus.WARN : VerificationStatus.HOLD;
+        VerificationStatus status = r.verificationStatus;
         tracks[trackId] = Track(r.audioHash, r.metadataCID, msg.sender, block.timestamp);
         verifications[trackId] = Verification(r.similarityScore, r.modelVersion, status);
         contributorsByTrack[trackId] = r.contributors;
