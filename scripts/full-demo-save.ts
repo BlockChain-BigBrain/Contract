@@ -18,24 +18,24 @@ const market = await ethers.deployContract("LicenseMarketplace", [await registry
 await market.waitForDeployment();
 await (await nft.setMarketplace(await market.getAddress())).wait();
 await (await splitter.setMarketplace(await market.getAddress())).wait();
-const domain = { name: "TrackAI_Registry", version: "1", chainId: chain.chainId, verifyingContract: await registry.getAddress() };
+const domain = { name: "TrackAI_Registry", version: "2", chainId: chain.chainId, verifyingContract: await registry.getAddress() };
 const types = { RegisterTrack: [
   { name: "audioHash", type: "bytes32" }, { name: "metadataCIDHash", type: "bytes32" },
   { name: "registrant", type: "address" }, { name: "contributorsHash", type: "bytes32" },
-  { name: "similarityScore", type: "uint256" }, { name: "modelVersion", type: "string" },
+  { name: "similarityScore", type: "uint256" }, { name: "verificationStatus", type: "uint8" }, { name: "modelVersion", type: "string" },
   { name: "nonce", type: "uint256" }, { name: "deadline", type: "uint256" },
 ] };
 const contributors = [creator.address, collaborator.address], shares = [60, 40];
 const deadline = BigInt((await ethers.provider.getBlock("latest"))!.timestamp + 3600);
-const registration = (name: string, score: number, nonce: number) => ({
+const registration = (name: string, score: number, nonce: number, verificationStatus: 0 | 1 | 2 = 0) => ({
   audioHash: "0x" + createHash("sha256").update(name).digest("hex"),
   metadataCID: "ipfs://demo-fixture-not-an-upload", contributors, shares,
-  similarityScore: score, modelVersion: "demo-fixture-v1", nonce, deadline,
+  similarityScore: score, verificationStatus, modelVersion: "demo-fixture-v1", nonce, deadline,
 });
 const sign = (r: ReturnType<typeof registration>, signer = verifier) => signer.signTypedData(domain, types, {
   audioHash: r.audioHash, metadataCIDHash: ethers.id(r.metadataCID), registrant: creator.address,
   contributorsHash: ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["address[]", "uint256[]"], [r.contributors, r.shares])),
-  similarityScore: r.similarityScore, modelVersion: r.modelVersion, nonce: r.nonce, deadline: r.deadline,
+  similarityScore: r.similarityScore, verificationStatus: r.verificationStatus, modelVersion: r.modelVersion, nonce: r.nonce, deadline: r.deadline,
 });
 const transactions: Record<string, string> = {};
 async function confirmed(label: string, tx: Promise<any>) {
@@ -62,7 +62,7 @@ const fakeSignature = await sign(invalid, attacker);
 await rejected("forged signature", () => registry.connect(creator).registerTrack(invalid, fakeSignature), registry, "InvalidSignature");
 assert.equal(await registry.isAudioHashRegistered(invalid.audioHash), false);
 assert.equal(await registry.usedNonces(creator.address, invalid.nonce), false);
-const hold = registration("hold-fixture", 9100, 3);
+const hold = registration("hold-fixture", 9100, 3, 2);
 await confirmed("registerHold", registry.connect(creator).registerTrack(hold, await sign(hold)));
 const holdId = await registry.trackIdByAudioHash(hold.audioHash);
 assert.equal((await registry.getVerification(holdId)).status, 2n);
