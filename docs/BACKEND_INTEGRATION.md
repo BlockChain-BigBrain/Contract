@@ -1,5 +1,11 @@
 # Track-AI Backend Integration
 
+> **AI v5 bridge (authoritative):** see [`AI_V5_CONTRACT_BRIDGE.md`](./AI_V5_CONTRACT_BRIDGE.md).
+> The current Contract boundaries are PASS `<8000`, WARN `8000..8499`, HOLD `>=8500`.
+> Older prose in this legacy integration note may describe the pre-v5 policy; do not
+> use it to derive thresholds. The bridge document and Solidity implementation are
+> authoritative.
+
 ## 1. 계약 역할 및 정책
 
 - `TrackRegistry`: 음원 해시/CID/등록자/기여자·지분/검증 점수·모델 버전을 불변 기록. 등록자에게 NFT를 발급하지 않는다.
