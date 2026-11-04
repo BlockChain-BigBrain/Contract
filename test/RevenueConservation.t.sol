@@ -27,15 +27,15 @@ contract RevenueConservationTest is Test {
         shares[0] = share; shares[1] = 100 - share;
         TrackRegistry.Registration memory r = TrackRegistry.Registration({
             audioHash: keccak256("audio"), metadataCID: "bafy", contributors: creators,
-            shares: shares, similarityScore: 7999, modelVersion: "v1", nonce: 0, deadline: block.timestamp + 100
+            shares: shares, similarityScore: 7999, verificationStatus: TrackRegistry.VerificationStatus.PASS, modelVersion: "v1", nonce: 0, deadline: block.timestamp + 100
         });
         bytes32 domain = keccak256(abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-            keccak256("TrackAI_Registry"), keccak256("1"), block.chainid, address(registry)
+            keccak256("TrackAI_Registry"), keccak256("2"), block.chainid, address(registry)
         ));
         bytes32 structHash = keccak256(abi.encode(
             registry.REGISTER_TRACK_TYPEHASH(), r.audioHash, keccak256(bytes(r.metadataCID)), creatorA,
-            keccak256(abi.encode(creators, shares)), r.similarityScore, keccak256(bytes(r.modelVersion)), r.nonce, r.deadline
+            keccak256(abi.encode(creators, shares)), r.similarityScore, uint256(r.verificationStatus), keccak256(bytes(r.modelVersion)), r.nonce, r.deadline
         ));
         (uint8 v, bytes32 sigR, bytes32 sigS) = vm.sign(verifierKey, keccak256(abi.encodePacked("\x19\x01", domain, structHash)));
         vm.prank(creatorA);
